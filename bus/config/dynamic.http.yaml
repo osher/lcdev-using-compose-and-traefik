@@ -1,0 +1,47 @@
+http:
+  routers:
+    # default priority - by `router.rule.length`
+    static: 
+      entryPoints: [ epFront ]
+      rule: >-
+        Host(`localhost`) || HostRegexp(`front\..*`)
+      middlewares: [ cors@file ]
+      service: front
+
+    api:
+      entryPoints: [ epFront ]
+      rule: >-
+        PathPrefix(`/api`)
+        && ( Host(`localhost`) || HostRegexp(`front\..*`) )
+      middlewares: [ cors@file, api@file ]
+      service: svr
+
+    svr:
+      rule: Host(`*`)
+      entryPoints: [ epSvr ]
+      middlewares: [ cors@file ]
+      service: svr
+
+  services:
+    front:
+      loadBalancer:
+        servers:
+          - url: http://front:80
+    svr:
+      loadBalancer:
+        servers:
+          - url: http://svr:3000
+          #- url: http://host.docker.internal:3000
+
+  middlewares:
+    api:
+      stripPrefix:
+        prefixes: [ /api ]
+    cors:
+      headers:
+        accessControlAllowMethods: [OPTIONS, GET, POST, PUT, DELETE]
+        accessControlAllowOriginList:
+          - https://backoffice.docker.local
+          - https://localhost
+        accessControlMaxAge: 100
+        addVaryHeader: true

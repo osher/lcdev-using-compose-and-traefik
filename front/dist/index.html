@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>lcdev poc</title>
+  </head>
+  <body>
+    <h2>enter element</h2>
+    Element: <input id="what" placeholder="what?"> 
+    <button onclick="shoot()">get</button>
+    <p> supported: <code>foo</code>, <code>bar</code>
+    <hr>
+    <div id="main"></div>
+    <script>
+      const main = document.getElementById('main');
+      const what = document.getElementById('what');
+      shoot();
+
+      function shoot() {
+      console.log('shooting', what.value || 'foo')
+        fetch(`/api/${what.value || 'foo'}`)
+        .then(r => r.text())
+        .then(text => main.innerHTML = text)
+      }
+    </script>
+  </body>
+</html>

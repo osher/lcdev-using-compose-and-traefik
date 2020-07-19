@@ -1,0 +1,16 @@
+{
+  "name": "svr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dockerize": "docker build --tag lcdev-poc/svr:latest .",
+    "test": "echo \"Error: no test specified\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "redis": "^3.0.2"
+  }
+}

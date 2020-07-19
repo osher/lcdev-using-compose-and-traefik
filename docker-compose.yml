@@ -1,0 +1,46 @@
+version: '3.4'
+services:
+  bus:
+    image: traefik:v2.3
+    volumes:
+      - './bus/config:/config'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    ports:
+      - '80:80'     #front
+      - '8080:8080' #traefik dashboard
+    command: >-
+      --api.insecure=true
+      --global.checkNewVersion=false
+      --global.sendAnonymousUsage=false
+      --providers.file.watch=true
+      --providers.file.directory=/config
+      --entryPoints.epFront.address=:80
+      --entryPoints.epSvr.address=:3000
+      --log.level=DEBUG
+    #  --accesslog=true
+    #  --providers.docker
+
+    restart: always
+
+  front:
+    image: nginx:mainline-alpine
+    volumes:
+      - './front/dist:/usr/share/nginx/html:ro'
+
+  svr:
+    image: lcdev-poc/svr:latest
+    ports:
+      - '3000:3000'
+    environment:
+      - REDIS_HOST=db-redis
+      - ENV=compose
+    links:
+      - db-redis
+      - bus
+    #labels:
+    #  - traefik.http.routers.svr.rule=Host(`svr.local`) || Host(`svr2.local`)
+
+  db-redis:
+    image: 'redis'
+    ports:
+      - '6379:6379'

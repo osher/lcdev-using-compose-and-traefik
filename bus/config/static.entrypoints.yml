@@ -1,0 +1,6 @@
+entryPoints:
+  epFront:
+    address: ":80"
+
+  epSvr:
+    address: ":3000"
