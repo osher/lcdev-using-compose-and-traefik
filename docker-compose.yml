@@ -1,6 +1,7 @@
 version: '3.4'
 services:
   bus:
+    restart: always
     image: traefik:v2.3
     volumes:
       - './bus/config:/config'
@@ -8,37 +9,50 @@ services:
     ports:
       - '80:80'     #front
       - '8080:8080' #traefik dashboard
+      - '7001:7001' #epSvc
     command: >-
+      --accesslog=true
       --api.insecure=true
       --global.checkNewVersion=false
       --global.sendAnonymousUsage=false
+      --log.level=DEBUG
+      --entryPoints.epFront.address=:80
+      --entryPoints.epSvc.address=:7001
       --providers.file.watch=true
       --providers.file.directory=/config
-      --entryPoints.epFront.address=:80
-      --entryPoints.epSvr.address=:3000
-      --log.level=DEBUG
-    #  --accesslog=true
-    #  --providers.docker
-
-    restart: always
+      --providers.docker
+      --providers.docker.constraints=Label(`traefik.autodetect`,`true`)
 
   front:
     image: nginx:mainline-alpine
     volumes:
       - './front/dist:/usr/share/nginx/html:ro'
+    labels:
+      - traefik.autodetect=true
+      #router: front-static-dc
+      - traefik.http.routers.front-static-dc.priority=1  #i.e the lowest
+      - traefik.http.routers.front-static-dc.entryPoints=epFront
+      - traefik.http.routers.front-static-dc.rule=PathPrefix(`/`)
+      - traefik.http.routers.front-static-dc.middlewares=cors@file
 
-  svr:
+  svc:
     image: lcdev-poc/svr:latest
-    ports:
-      - '3000:3000'
     environment:
-      - REDIS_HOST=db-redis
       - ENV=compose
-    links:
-      - db-redis
-      - bus
-    #labels:
-    #  - traefik.http.routers.svr.rule=Host(`svr.local`) || Host(`svr2.local`)
+      - REDIS_HOST=db-redis
+      - REDIS_PORT=6379
+    labels:
+      - traefik.autodetect=true
+      #router: front-api-dc
+      - traefik.http.routers.front-api-dc.priority=999
+      - traefik.http.routers.front-api-dc.entryPoints=epFront
+      - traefik.http.routers.front-api-dc.rule=PathPrefix(`/api`)
+      - traefik.http.routers.front-api-dc.middlewares=cors@file,api@file
+      #router: svc-dc
+      - traefik.http.routers.svc-dc.priority=999
+      - traefik.http.routers.svc-dc.entryPoints=epSvc
+      - traefik.http.routers.svc-dc.rule=PathPrefix(`/`)
+      - traefik.http.routers.svc-dc.middlewares=cors@file
 
   db-redis:
     image: 'redis'

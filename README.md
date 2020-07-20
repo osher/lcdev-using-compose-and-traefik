@@ -7,50 +7,19 @@
 |  | -------   |   | front service|---->|  nginx  |
 |  |  Path:/   >-->+--------------+|    +=========+
 |  |  Path:/api>-->+--------------+|    +=========+    +=========+
-|  +-----------+   | svr service  |--+->| svr:    |-+->| db:     |
+|  +-----------+   | svc service  |--+->| svc:    |-+->| db:     |
 |traefik           +--------------+| |  |  nodejs | |  |  redis  |
 +==================================+ |  +=========+ |  +=========+
 docker network                       |              |
 - - - - - - - - - - - - - - - - - - \|/ - - - - - - | - - - - - -
 developer machine              +=========+          |
-                               | svr(lc) |----------+
+                               | svc(lc) |----------+
                                |  nodejs |
                                +=========+
 ```
 
-Autodetect and decide - when `svr` container is down - route to `svr(lc)`.
+Autodetect and decide - when `svc` container is down - route to `svc(lc)`.
 
-## current state of the repo
-
-It is relaying on `file` provider, and apply changes manualy
-(docker provider not utilized)
-
-To change between `svr` and `svr(lc)` developer has to update 
-`bus/config/dynamic.http.yaml`
-
-from:
-```yaml
-    svr:
-      loadBalancer:
-        servers:
-          - url: http://svr:3000
-          #- url: http://host.docker.internal:3000
-```
-
-to:
-```yaml
-    svr:
-      loadBalancer:
-        servers:
-          #- url: http://svr:3000
-          - url: http://host.docker.internal:3000
-```
-
-## the challange
-
-We're looking for a setup in which developer should only stop the `svr` container 
-to have `traefik` fallback to the `svr(lc)` running on developer machine,
-and start the container to have `traefik` ignore developer machine.
 
 ## Build
 
@@ -62,7 +31,39 @@ Build `svr` container
 cd svr && npm i && npm run dockerize
 ```
 
-## run
-```
-docker-compose up -d
-```
+## demo
+
+1. once built, run the docker compose:
+  ```
+   docker-compose up -d
+  ```
+2. run svr in local-dev mode on your machine on port 3001
+  ```
+   node svr/index.js
+  ```
+  - Mind that the baked in default port is 3001, which is also the port used in
+    the `buz/config/dynamic.http.yaml`.
+
+3. browse to your `http://localhost`
+4. try items `foo`, `bar` - expect reply from **compose**.
+5. stop `svc`
+  ```
+   docker-compose stop svc
+  ```
+6. try items `foo`, `bar` - expect reply from **local** .
+7. start `svc` 
+  ```
+   docker-compose start svc
+  ```
+8. try items `foo`, `bar` - expect reply from **compose**.
+
+** NO RESTARTS REQUIRED ! **
+
+## what's going on?
+Whenever the `svc` container is running - it creates routes with higher priority
+which serve reply from the container. These high priority routes "shadow" the
+routes of the file provider.
+
+Whenever the `svc` container is stopped - these routes are removed, and the
+routes from the file provider take effect, and the reply is tried from your
+local machine.

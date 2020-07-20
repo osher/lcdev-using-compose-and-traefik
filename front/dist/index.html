@@ -1,14 +1,28 @@
 <html>
   <head>
     <title>lcdev poc</title>
+    <style> * { font-family: arial } </style>
   </head>
   <body>
-    <h2>enter element</h2>
-    Element: <input id="what" placeholder="what?"> 
-    <button onclick="shoot()">get</button>
-    <p> supported: <code>foo</code>, <code>bar</code>
+    <h2>Enter item</h2>
+    item: <input id="what" placeholder="what?">
+    <button onclick="shoot()">get</button> ( supported: <code>foo</code>, <code>bar</code>, defaults to <code>foo</code> )
+    <br>
+    <br>The result:
     <hr>
     <div id="main"></div>
+    <hr>
+    <h2> what's going on? </h2>
+    <p>
+      Whenever the <code>svc</code> container is running - it creates routes 
+      with higher priority which serve reply from the container. These high
+      priority routes "shadow" the routes of the file provider.
+    </p><p>      
+      Whenever the <code>svc</code> container is stopped - these routes are 
+      removed, and the routes from the file provider take effect, and the 
+      reply is tried from your local machine.
+    </p>
+    <img src="lc-dev-traefik--rules-per-ep.png">
     <script>
       const main = document.getElementById('main');
       const what = document.getElementById('what');

@@ -1,4 +1,10 @@
-const { ENV = 'local', REDIS_HOST = 'localhost', REDIS_PORT = 6379 } = process.env
+const {
+  ENV = 'local',
+  WEB_PORT = '3001',
+  REDIS_HOST = 'localhost',
+  REDIS_PORT = 6379,
+} = process.env
+
 const { assign } = Object
 const ioc = {}
 
@@ -29,7 +35,7 @@ function seed(ioc) {
 function webBind({ db }) {
   return new Promise((a,r) => {
     const s = require('http').createServer(webHandler(db))
-    s.listen(3000, e => e ? r(e) : a(s))
+    s.listen(WEB_PORT, e => e ? r(e) : a(s))
   })
 
   function webHandler(db) {

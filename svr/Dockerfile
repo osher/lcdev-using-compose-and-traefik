@@ -1,5 +1,6 @@
 FROM node:12-alpine
-EXPOSE 3030
+ENV WEB_PORT 7001
+EXPOSE ${WEB_PORT}
 WORKDIR /app
 COPY index.js ./
 COPY node_modules node_modules

@@ -1,37 +1,24 @@
 http:
   routers:
-    # default priority - by `router.rule.length`
-    static: 
-      entryPoints: [ epFront ]
-      rule: >-
-        Host(`localhost`) || HostRegexp(`front\..*`)
+    svc-lc:
+      entryPoints: [ epSvc ]
+      priority: 100  #i.e - low priority
+      rule: PathPrefix(`/`)
       middlewares: [ cors@file ]
-      service: front
+      service: svc-lc
 
-    api:
+    front-api-lc:
       entryPoints: [ epFront ]
-      rule: >-
-        PathPrefix(`/api`)
-        && ( Host(`localhost`) || HostRegexp(`front\..*`) )
+      priority: 100  #i.e - low priority
+      rule: PathPrefix(`/api`)
       middlewares: [ cors@file, api@file ]
-      service: svr
-
-    svr:
-      rule: Host(`*`)
-      entryPoints: [ epSvr ]
-      middlewares: [ cors@file ]
-      service: svr
+      service: svc-lc
 
   services:
-    front:
+    svc-lc:
       loadBalancer:
         servers:
-          - url: http://front:80
-    svr:
-      loadBalancer:
-        servers:
-          - url: http://svr:3000
-          #- url: http://host.docker.internal:3000
+          - url: http://host.docker.internal:3001
 
   middlewares:
     api:
