@@ -60,10 +60,16 @@ cd svr && npm i && npm run dockerize
 ** NO RESTARTS REQUIRED ! **
 
 ## what's going on?
-Whenever the `svc` container is running - it creates routes with higher priority
+
+![Diagram](./front/dist/lc-dev-traefik--rules-per-ep.png)
+
+Whenever the `svc` container is running - it creates routers with higher priority
 which serve reply from the container. These high priority routes "shadow" the
 routes of the file provider.
 
 Whenever the `svc` container is stopped - these routes are removed, and the
 routes from the file provider take effect, and the reply is tried from your
 local machine.
+
+
+
